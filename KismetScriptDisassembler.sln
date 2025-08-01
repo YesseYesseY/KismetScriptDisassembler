@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KismetScriptDisassembler", "KismetScriptDisassembler\KismetScriptDisassembler.csproj", "{0469322D-D22A-47CD-A7BD-14D0DEEA8910}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0469322D-D22A-47CD-A7BD-14D0DEEA8910}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0469322D-D22A-47CD-A7BD-14D0DEEA8910}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0469322D-D22A-47CD-A7BD-14D0DEEA8910}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0469322D-D22A-47CD-A7BD-14D0DEEA8910}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {41E664E3-2680-4CC7-A3B4-5E43011C66FC}
+	EndGlobalSection
+EndGlobal
