@@ -1,1 +1,2 @@
 # KismetScriptDisassembler
+A simple tool to translate kismet bytecode to C++ (or atleast try). It's very messy, not finished but you can tell what the code does. I made this in like a couple hours so dont expect much
