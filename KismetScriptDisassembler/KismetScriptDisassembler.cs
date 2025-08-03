@@ -53,6 +53,31 @@ namespace KismetScriptDisassembler
             }
             WriteLine();
 
+            
+            Dictionary<string, List<uint>> labels = new();
+            foreach (var child in Class.Children)
+            {
+                if (!child.TryLoad(out UFunction func))
+                    continue;
+
+                foreach (var expr in func.ScriptBytecode)
+                {
+                    switch (expr)
+                    {
+                        case EX_Jump jump:
+                            labels.GetOrAdd(func.Name).Add(jump.CodeOffset);
+                            break;
+                        case EX_FinalFunction finalfunc:
+                            if (finalfunc.StackNode.Name.StartsWith("ExecuteUbergraph"))
+                            {
+                                labels.GetOrAdd(finalfunc.StackNode.Name).Add((uint)((EX_IntConst)finalfunc.Parameters[0]).Value);
+                            }
+                            break;
+                    }
+                }
+
+            }
+
             foreach (var child in Class.Children)
             {
                 if (!child.TryLoad(out UFunction func))
@@ -78,20 +103,14 @@ namespace KismetScriptDisassembler
                 WriteLine(")", true);
                 WriteLine("{");
                 AddIndent();
-                //var nonparmprops = func.ChildProperties.Where(e => !((FProperty)e).IsParm());
-                //foreach (var field in nonparmprops)
-                //{
-                //    var prop = (FProperty)field;
-                //    WriteLine($"{prop.GetCPPType()} {prop.Name};");
-                //}
+
                 foreach (var expr in func.ScriptBytecode)
                 {
                     try
                     {
-                        if (expr.Token != EExprToken.EX_EndOfScript)
+                        if (labels.TryGetValue(func.Name, out var labellist) && labellist.Contains((uint)expr.StatementIndex))
                             WriteLine($"\n{func.Name}_{expr.StatementIndex:X}:", true);
 
-                        // Above makes everything unreadable so i think we loop through all expressions in every function and save all statements from Jump, JumpIfNot, etc.
                         ParseExpr(expr, func);
                     }
                     catch(Exception e)
@@ -234,13 +253,13 @@ namespace KismetScriptDisassembler
                     Write("nullptr");
                     break;
 
-                // TODO: Make pushexec invisible and pop "return;"? It's basically the same.
                 case EX_PushExecutionFlow pushexec:
-                    WriteLine($"PushExecutionFlow({pushexec.PushingAddress});");
+                    //WriteLine($"PushExecutionFlow({pushexec.PushingAddress});");
                     break;
 
                 case EX_PopExecutionFlow:
-                    WriteLine($"PopExecutionFlow();");
+                    //WriteLine($"PopExecutionFlow();");
+                    WriteLine($"return;");
                     break;
 
                 case EX_PopExecutionFlowIfNot popifnot:
@@ -248,7 +267,8 @@ namespace KismetScriptDisassembler
                     ParseExpr(popifnot.BooleanExpression, CurrentFunction, expr);
                     WriteLine(")", true);
                     AddIndent();
-                    WriteLine($"PopExecutionFlow();");
+                    //WriteLine($"PopExecutionFlow();");
+                    WriteLine($"return;");
                     DropIndent();
                     break;
 
