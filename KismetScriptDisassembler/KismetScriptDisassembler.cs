@@ -185,14 +185,23 @@ namespace KismetScriptDisassembler
                     break;
 
                 case EX_LocalFinalFunction localfinalfunc:
-                    Write($"{localfinalfunc.StackNode.Name}(", false);
-                    for (int i = 0; i < localfinalfunc.Parameters.Length; i++)
+                    if (localfinalfunc.StackNode.Name.StartsWith("ExecuteUbergraph") && localfinalfunc.Parameters.Length > 0)
                     {
-                        ParseExpr(localfinalfunc.Parameters[i], CurrentFunction, expr);
-                        if (i != localfinalfunc.Parameters.Length - 1)
-                            Write(", ");
+                        Write($"goto {localfinalfunc.StackNode.Name}_", false);
+                        ParseExpr(localfinalfunc.Parameters[0], CurrentFunction, expr);
+                        WriteLine(";", true);
                     }
-                    WriteLine(");", true);
+                    else
+                    {
+                        Write($"{localfinalfunc.StackNode.Name}(", false);
+                        for (int i = 0; i < localfinalfunc.Parameters.Length; i++)
+                        {
+                            ParseExpr(localfinalfunc.Parameters[i], CurrentFunction, expr);
+                            if (i != localfinalfunc.Parameters.Length - 1)
+                                Write(", ");
+                        }
+                        WriteLine(");", true);
+                    }
                     break;
 
                 case EX_FinalFunction finalfunc:
@@ -229,6 +238,14 @@ namespace KismetScriptDisassembler
                     break;
 
                 case EX_IntConst intconst:
+                    if (outer is EX_LocalFinalFunction outeraslocal and not null)
+                    {
+                        if (outeraslocal.StackNode.Name.StartsWith("ExecuteUbergraph"))
+                        {
+                            Write($"{intconst.Value:X}");
+                            break;
+                        }
+                    }
                     Write($"(int32){intconst.Value}");
                     break;
 
