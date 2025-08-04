@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using CUE4Parse.UE4.Assets.Objects;
 using CUE4Parse.UE4.Kismet;
 using CUE4Parse.UE4.Objects.Core.Math;
 using CUE4Parse.UE4.Objects.UObject;
@@ -42,7 +43,7 @@ namespace KismetScriptDisassembler
         void WriteLine() => OutFile.WriteLine();
         void Write(bool ignoreIndent = false) => Write("", ignoreIndent);
 
-        public void Disassemble()
+        public void Disassemble(UScriptMap? funcmeta = null, UScriptMap? propmeta = null)
         {
             WriteLine($"class {Class.Name} : public {Class.SuperStruct.Name}");
             WriteLine("{");
@@ -84,6 +85,25 @@ namespace KismetScriptDisassembler
                 if (!child.TryLoad(out UFunction func))
                     continue;
 
+                if (funcmeta is not null)
+                {
+                    var lol = funcmeta.Properties.FirstOrDefault(e => e.Key.GetValue<FName>().Text == func.Name).Value?.GetValue<FStructFallback>();
+                    if (lol is not null && lol.TryGetValue(out FStructFallback meta, "ObjectMetaData"))
+                    {
+                        if (meta.TryGetValue(out UScriptMap objmeta, "ObjectMetaData"))
+                        {
+                            foreach (var thing in objmeta.Properties)
+                            {
+                                if (thing.Key.GetValue<FName>().Text == "Comment")
+                                {
+                                    WriteLine(thing.Value.GetValue<string>());
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 FProperty? retprop = (FProperty?)func.ChildProperties.FirstOrDefault(e => ((FProperty)e!).PropertyFlags.HasFlag(EPropertyFlags.ReturnParm), null);
                 Write($"{(retprop is null ? "void" : retprop.GetCPPType())} {func.Name}(", false);
                 List<FProperty> propstocareabout = new();
@@ -107,19 +127,19 @@ namespace KismetScriptDisassembler
 
                 foreach (var expr in func.ScriptBytecode)
                 {
-                    try
-                    {
+                    //try
+                    //{
                         if (labels.TryGetValue(func.Name, out var labellist) && labellist.Contains((uint)expr.StatementIndex))
                             WriteLine($"\n{func.Name}_{expr.StatementIndex:X}:", true);
 
                         ParseExpr(expr, func);
-                    }
-                    catch(Exception e)
-                    {
-                        OutFile.Dispose();
-                        Console.WriteLine("Crash :(");
-                        return;
-                    }
+                    //}
+                    //catch(Exception e)
+                    //{
+                    //    OutFile.Dispose();
+                    //    Console.WriteLine("Crash :(");
+                    //    return;
+                    //}
                 }
                 DropIndent();
                 WriteLine("}");
@@ -261,7 +281,7 @@ namespace KismetScriptDisassembler
                     break;
 
                 case EX_NameConst nameconst:
-                    Write($"FName({nameconst.Value})");
+                    Write($"FName(\"{nameconst.Value}\")");
                     break;
 
                 case EX_TextConst textconst:
@@ -284,7 +304,7 @@ namespace KismetScriptDisassembler
                     break;
 
                 case EX_StructConst structconst:
-                    Write($"{structconst.Struct.Name}()");
+                    Write($"F{structconst.Struct.Name}()");
                     // TODO: Properties
                     break;
 
@@ -469,7 +489,7 @@ namespace KismetScriptDisassembler
                         bool skipwriteprefix = outer is not null && ((outer is EX_LetBase temp && temp.Assignment == expr) || outer is EX_Let temp2 && temp2.Assignment == expr);
                         if (!skipwriteprefix)
                             skipwriteprefix = outer is not null && (outer is EX_Context or EX_FinalFunction or EX_JumpIfNot or EX_Cast or EX_InterfaceContext
-                                or EX_StructMemberContext or EX_CastBase or EX_SwitchValue);
+                                or EX_StructMemberContext or EX_CastBase or EX_SwitchValue or EX_PopExecutionFlowIfNot);
                         if (!skipwriteprefix)
                             skipwriteprefix = prop.IsParm();
 

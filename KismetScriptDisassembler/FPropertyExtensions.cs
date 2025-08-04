@@ -18,11 +18,46 @@ namespace KismetScriptDisassembler
                 case FDoubleProperty:
                     return "double";
                 case FStructProperty structprop:
-                    return $"struct {structprop.Struct.Name}";
+                    return $"struct F{structprop.Struct.Name}";
+                case FClassProperty classProperty:
+                    return "class UClass*";
                 case FObjectProperty objectprop:
-                    return $"class {objectprop.PropertyClass.Name}*";
+                    char prefix = 'U';
+                    
+                    // EWWWW
+                    if (GlobalProvider.Provider.MappingsForGame is not null)
+                    {
+                        var basething = objectprop.PropertyClass.Name;
+                        if (!GlobalProvider.Provider.MappingsForGame.Types.ContainsKey(basething))
+                        {
+                            var klass = objectprop.PropertyClass.ResolvedObject;
+                            while (klass is not null && klass.Super is not null)
+                            {
+                                basething = klass.Super.Name.Text;
+                                klass = klass.Super;
+                            }
+                        }
+
+                        var curtype = GlobalProvider.Provider.MappingsForGame.Types[basething];
+                        
+                        while (curtype is not null)
+                        {
+                            if (curtype.Name == "Actor")
+                            {
+                                prefix = 'A';
+                                break;
+                            }
+
+                            if (GlobalProvider.Provider.MappingsForGame.Types.ContainsKey(curtype.SuperType ?? ""))
+                                curtype = GlobalProvider.Provider.MappingsForGame.Types[curtype.SuperType ?? ""];
+                            else
+                                curtype = null;
+                        }
+                    }
+                    
+                    return $"class {prefix}{objectprop.PropertyClass.Name}*";
                 case FInterfaceProperty objectprop:
-                    return $"class {objectprop.InterfaceClass.Name}*";
+                    return $"class I{objectprop.InterfaceClass.Name}*";
                 case FEnumProperty enumprop:
                     return $"{enumprop.Enum.Name}";
                 case FArrayProperty arrayprop:

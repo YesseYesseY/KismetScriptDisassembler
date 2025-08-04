@@ -7,6 +7,8 @@ using CUE4Parse.Encryption.Aes;
 using CUE4Parse.FileProvider;
 using CUE4Parse.MappingsProvider;
 using CUE4Parse.UE4.Assets;
+using CUE4Parse.UE4.Assets.Exports;
+using CUE4Parse.UE4.Assets.Objects;
 using CUE4Parse.UE4.Assets.Readers;
 using CUE4Parse.UE4.Objects.Core.Misc;
 using CUE4Parse.UE4.Objects.UObject;
@@ -26,6 +28,7 @@ paksPath = "C:\\Users\\Yes\\Desktop\\19.40\\FortniteGame\\Content\\Paks";
 mainAes = "0xB30A5DBC657A27FBC9E915AFBFBB13F97A3164034F32B1899DEA714CD979E8C3";
 mapFile = "C:\\Users\\Yes\\Desktop\\19.40.usmap";
 objsToExport.Add("FortniteGame/Content/Athena/Items/ForagedItems/EnvCampFire/B_BGA_Athena_EnvCampFire.B_BGA_Athena_EnvCampFire_C");
+objsToExport.Add("FortniteGame/Content/Athena/Items/Weapons/Prototype/PetrolPump/BGA_Petrol_Pickup.BGA_Petrol_Pickup_C");
 ueVer = "GAME_UE5_NoLargeWorldCoordinates";
 #else
 paksPath = "C:\\Program Files\\Epic Games\\Fortnite\\FortniteGame\\Content\\Paks";
@@ -94,6 +97,8 @@ if (mapFile is not null && File.Exists(mapFile))
     provider.MappingsContainer = new FileUsmapTypeMappingsProvider(mapFile);
 }
 
+GlobalProvider.Provider = provider;
+
 provider.ReadScriptData = true;
 CultureInfo customCulture = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
 customCulture.NumberFormat.NumberDecimalSeparator = ".";
@@ -106,6 +111,20 @@ provider.SubmitKey(new FGuid(), new FAesKey(mainAes));
 foreach (var objName in objsToExport)
 {
     var obj = provider.LoadPackageObject<UClass>(objName);
+    UScriptMap? funcmeta = null;
+    UScriptMap? propmeta = null;
 
-    new DefaultKismetScriptDisassembler(outPath, obj).Disassemble();
+    if (provider.TryLoadPackage(obj.GetPathName().Replace(obj.Name, "o.uasset"), out var pkg))
+    {
+        var yes = pkg.GetExport("CookedClassMetaData");
+        yes.TryGetValue(out funcmeta, "FunctionsMetaData");
+        if (yes.TryGetValue(out FStructFallback classmeta, "ClassMetaData"))
+        {
+            classmeta.TryGetValue(out propmeta, "PropertiesMetaData");
+        }
+    }
+    
+    //provider.TryLoadPackageObject<UScriptClass>(objName.Replace(obj.Name, "CookedClassMetaData"), out UScriptClass? ccmd);
+    
+    new DefaultKismetScriptDisassembler(outPath, obj).Disassemble(funcmeta, propmeta);
 }
