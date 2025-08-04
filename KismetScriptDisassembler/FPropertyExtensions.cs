@@ -23,6 +23,8 @@ namespace KismetScriptDisassembler
                     return $"class {objectprop.PropertyClass.Name}*";
                 case FInterfaceProperty objectprop:
                     return $"class {objectprop.InterfaceClass.Name}*";
+                case FEnumProperty enumprop:
+                    return $"{enumprop.Enum.Name}";
                 case FIntProperty:
                     return "int32";
                 case FFloatProperty:

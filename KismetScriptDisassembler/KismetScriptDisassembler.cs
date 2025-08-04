@@ -135,6 +135,14 @@ namespace KismetScriptDisassembler
         {
             switch (expr)
             {
+                /*
+                 TODO:
+                  * EX_BindDelegate
+                  * EX_AddMulticastDelegate
+                  * EX_RemoveMulticastDelegate
+                  * EX_SwitchValue
+                  * EX_SetArray
+                 */
                 case EX_LetBase letobj:
                     {
                         //var letobj = (EX_LetBase)expr;
@@ -230,6 +238,13 @@ namespace KismetScriptDisassembler
 
                 case EX_NameConst nameconst:
                     Write($"FName({nameconst.Value})");
+                    break;
+
+                case EX_TextConst textconst:
+                    Write("FText(\"");
+                    if (textconst.Value.SourceString is not null)
+                        ParseExpr(textconst.Value.SourceString, CurrentFunction, expr);
+                    Write("\")");
                     break;
 
                 case EX_VectorConst vectorconst:
@@ -331,7 +346,10 @@ namespace KismetScriptDisassembler
                     break;
 
                 case EX_StringConst stringconst:
-                    Write($"FString(L\"{stringconst.Value}\")");
+                    if (outer is EX_TextConst and not null)
+                        Write(stringconst.Value);
+                    else
+                        Write($"FString(L\"{stringconst.Value}\")");
                     break;
 
                 case EX_Context context:
@@ -369,7 +387,8 @@ namespace KismetScriptDisassembler
                         var prop = (FProperty)field!;
                         bool skipwriteprefix = outer is not null && ((outer is EX_LetBase temp && temp.Assignment == expr) || outer is EX_Let temp2 && temp2.Assignment == expr);
                         if (!skipwriteprefix)
-                            skipwriteprefix = outer is not null && (outer is EX_Context or EX_FinalFunction or EX_JumpIfNot or EX_Cast or EX_InterfaceContext or EX_StructMemberContext);
+                            skipwriteprefix = outer is not null && (outer is EX_Context or EX_FinalFunction or EX_JumpIfNot or EX_Cast or EX_InterfaceContext
+                                or EX_StructMemberContext or EX_CastBase);
                         if (!skipwriteprefix)
                             skipwriteprefix = prop.IsParm();
 

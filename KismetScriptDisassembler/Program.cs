@@ -17,13 +17,22 @@ using KismetScriptDisassembler;
 string? paksPath = null;
 string? mainAes = null;
 string? mapFile = null;
+string ueVer = "GAME_UE5_LATEST";
 List<string> objsToExport = new();
 
 #if DEBUG
+#if true
+paksPath = "C:\\Users\\Yes\\Desktop\\19.40\\FortniteGame\\Content\\Paks";
+mainAes = "0xB30A5DBC657A27FBC9E915AFBFBB13F97A3164034F32B1899DEA714CD979E8C3";
+mapFile = "C:\\Users\\Yes\\Desktop\\19.40.usmap";
+objsToExport.Add("FortniteGame/Content/Athena/Items/ForagedItems/EnvCampFire/B_BGA_Athena_EnvCampFire.B_BGA_Athena_EnvCampFire_C");
+ueVer = "GAME_UE5_NoLargeWorldCoordinates";
+#else
 paksPath = "C:\\Program Files\\Epic Games\\Fortnite\\FortniteGame\\Content\\Paks";
 mainAes = "0x7E0342286BB79D986B204ADF54AE03E066FA5FB41A0D360AFC4E1F48B1CE7EDD";
 mapFile = "C:\\Users\\Yes\\Downloads\\FModel\\Output\\.data\\++Fortnite+Release-36.30-CL-44367537-Windows_oo.usmap";
 objsToExport.Add("FortniteGame/Content/Athena/Items/ForagedItems/EnvCampFire/B_BGA_Athena_EnvCampFire.B_BGA_Athena_EnvCampFire_C");
+#endif
 #endif
 
 var _out = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
@@ -75,7 +84,10 @@ OodleHelper.DownloadOodleDll();
 OodleHelper.Initialize(OodleHelper.OODLE_DLL_NAME);
 
 // TODO: Custom version arg
-var provider = new DefaultFileProvider(paksPath, SearchOption.TopDirectoryOnly, new VersionContainer(EGame.GAME_UE5_LATEST));
+EGame game = EGame.GAME_UE5_LATEST;
+if (Enum.TryParse(ueVer, out EGame customgame))
+    game = customgame;
+var provider = new DefaultFileProvider(paksPath, SearchOption.TopDirectoryOnly, new VersionContainer(game));
 if (mapFile is not null && File.Exists(mapFile))
 {
     provider.MappingsContainer = new FileUsmapTypeMappingsProvider(mapFile);
