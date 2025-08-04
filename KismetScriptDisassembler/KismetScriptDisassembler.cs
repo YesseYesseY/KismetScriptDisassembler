@@ -10,6 +10,7 @@ using CUE4Parse.UE4.Objects.Core.Math;
 using CUE4Parse.UE4.Objects.UObject;
 using CUE4Parse.Utils;
 using Org.BouncyCastle.Asn1.X509;
+using static CUE4Parse.UE4.Objects.Core.i18N.FTextHistory;
 
 namespace KismetScriptDisassembler
 {
@@ -140,6 +141,8 @@ namespace KismetScriptDisassembler
                   * EX_BindDelegate
                   * EX_AddMulticastDelegate
                   * EX_RemoveMulticastDelegate
+                  
+                 Look more into:
                   * EX_SwitchValue
                   * EX_SetArray
                  */
@@ -253,6 +256,10 @@ namespace KismetScriptDisassembler
                     Write($"(float){floatconst.Value}");
                     break;
 
+                case EX_DoubleConst doubleconst:
+                    Write($"(double){doubleconst.Value}");
+                    break;
+
                 case EX_NameConst nameconst:
                     Write($"FName({nameconst.Value})");
                     break;
@@ -362,6 +369,63 @@ namespace KismetScriptDisassembler
                     Write($"(uint8){byteconst.Value}");
                     break;
 
+                case EX_SetArray setarr: // TODO: Check more instances of SetArray
+                    Write();
+                    if (setarr.AssigningProperty is not null)
+                    {
+                        ParseExpr(setarr.AssigningProperty, CurrentFunction, expr);
+                        Write(" = TArray::SetArray(");
+                        for (int i = 0; i < setarr.Elements.Length; i++)
+                        {
+                            ParseExpr(setarr.Elements[i], CurrentFunction, expr);
+                            if (i != setarr.Elements.Length - 1)
+                                Write(", ");
+                        }
+                        WriteLine(");", true);
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    break;
+
+                case EX_SwitchValue switchvalue:
+                    if (outer is EX_Let and not null)
+                    {
+                        WriteLine("[]() // EX_SwitchValue", true);
+                        WriteLine("{");
+                        AddIndent();
+                        Write("switch(", false);
+                        ParseExpr(switchvalue.IndexTerm, CurrentFunction, expr);
+                        WriteLine(")", true);
+                        WriteLine("{");
+                        AddIndent();
+                        foreach (var Case in switchvalue.Cases)
+                        {
+                            Write("case ", false);
+                            ParseExpr(Case.CaseIndexValueTerm, CurrentFunction, expr);
+                            WriteLine(":", true);
+                            AddIndent();
+                            Write("return ", false);
+                            ParseExpr(Case.CaseTerm, CurrentFunction, expr);
+                            WriteLine(";", true);
+                            DropIndent();
+                        }
+                        DropIndent();
+                        WriteLine("}");
+                        Write("return ", false);
+                        ParseExpr(switchvalue.DefaultTerm, CurrentFunction, expr);
+                        WriteLine(";", true);
+                        DropIndent();
+                        Write("}()", false);
+                    }
+                    else
+                    {
+                        Write("/*EX_SwitchValue*/");
+                    }
+                    break;
+
                 case EX_StringConst stringconst:
                     if (outer is EX_TextConst and not null)
                         Write(stringconst.Value);
@@ -405,7 +469,7 @@ namespace KismetScriptDisassembler
                         bool skipwriteprefix = outer is not null && ((outer is EX_LetBase temp && temp.Assignment == expr) || outer is EX_Let temp2 && temp2.Assignment == expr);
                         if (!skipwriteprefix)
                             skipwriteprefix = outer is not null && (outer is EX_Context or EX_FinalFunction or EX_JumpIfNot or EX_Cast or EX_InterfaceContext
-                                or EX_StructMemberContext or EX_CastBase);
+                                or EX_StructMemberContext or EX_CastBase or EX_SwitchValue);
                         if (!skipwriteprefix)
                             skipwriteprefix = prop.IsParm();
 

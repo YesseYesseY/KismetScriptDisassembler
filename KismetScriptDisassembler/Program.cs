@@ -21,7 +21,7 @@ string ueVer = "GAME_UE5_LATEST";
 List<string> objsToExport = new();
 
 #if DEBUG
-#if true
+#if false
 paksPath = "C:\\Users\\Yes\\Desktop\\19.40\\FortniteGame\\Content\\Paks";
 mainAes = "0xB30A5DBC657A27FBC9E915AFBFBB13F97A3164034F32B1899DEA714CD979E8C3";
 mapFile = "C:\\Users\\Yes\\Desktop\\19.40.usmap";
@@ -32,6 +32,7 @@ paksPath = "C:\\Program Files\\Epic Games\\Fortnite\\FortniteGame\\Content\\Paks
 mainAes = "0x7E0342286BB79D986B204ADF54AE03E066FA5FB41A0D360AFC4E1F48B1CE7EDD";
 mapFile = "C:\\Users\\Yes\\Downloads\\FModel\\Output\\.data\\++Fortnite+Release-36.30-CL-44367537-Windows_oo.usmap";
 objsToExport.Add("FortniteGame/Content/Athena/Items/ForagedItems/EnvCampFire/B_BGA_Athena_EnvCampFire.B_BGA_Athena_EnvCampFire_C");
+objsToExport.Add("FortniteGame/Content/Athena/Items/Weapons/Prototype/PetrolPump/BGA_Petrol_Pickup.BGA_Petrol_Pickup_C");
 #endif
 #endif
 

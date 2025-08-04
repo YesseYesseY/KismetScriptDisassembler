@@ -25,6 +25,13 @@ namespace KismetScriptDisassembler
                     return $"class {objectprop.InterfaceClass.Name}*";
                 case FEnumProperty enumprop:
                     return $"{enumprop.Enum.Name}";
+                case FArrayProperty arrayprop:
+                    return $"TArray<{(arrayprop.Inner is not null ? arrayprop.Inner.GetCPPType() : "arrayprop.Inner is null ;-;")}>";
+                case FByteProperty byteprop:
+                    if (byteprop.Enum.IsNull)
+                        return "uint8";
+                    else
+                        return $"TEnumAsByte<{byteprop.Enum.Name}>";
                 case FIntProperty:
                     return "int32";
                 case FFloatProperty:
